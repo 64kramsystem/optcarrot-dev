@@ -3,4 +3,25 @@
 # I'm too lazy to type `-Ilib` every time...
 require_relative "../lib/optcarrot"
 
-Optcarrot::NES.new.run
+if Dir.pwd =~ /tenderjit/
+  puts "Running via TenderJIT..."
+
+  require 'tenderjit'
+
+  jit = TenderJIT.new
+  carrot = Optcarrot::NES.new
+
+  meth = carrot.method(:run)
+  jit.compile(meth)
+  jit.enable!
+  meth.call
+  jit.disable!
+
+  checksum = carrot.ppu.output_pixels.pack("C*").sum
+
+  puts "Unexpected LAN Master checksum (59662 expected): #{checksum}" if checksum != 59662
+else
+  Optcarrot::NES.new.run
+end
+
+
